@@ -1,0 +1,11 @@
+[template-aliases]
+builtin_change_id_with_hidden_and_divergent_info = """
+if(hidden,
+  label("hidden",
+    separate(" ", "\u200B" ++ format_short_change_id(change_id), "\u200B" ++format_short_commit_id(commit_id) ++ "\u200B", "hidden")
+  ),
+  label(if(divergent, "divergent"),
+    separate(" ", "\u200B" ++ format_short_change_id(change_id) ++ if(divergent,"??"), "\u200B" ++ format_short_commit_id(commit_id) ++ "\u200B")
+  )
+)
+"""
