@@ -1,17 +1,14 @@
-use std::{
-    fmt::Display,
-    io,
-    ops::{Deref, DerefMut},
-    process::{Child, Command},
-};
+use std::fmt::Display;
+use std::io;
+use std::ops::{Deref, DerefMut};
+use std::process::{Child, Command};
 
 use itertools::Itertools;
 
-use crate::{
-    common::Mode,
-    shell::{command::VjjCommand, fzf_binding::FzfBindHandler},
-    VjjShellExpression,
-};
+use crate::common::Mode;
+use crate::shell::command::VjjCommand;
+use crate::shell::fzf_binding::FzfBindHandler;
+use crate::VjjShellExpression;
 
 pub struct Fzf {
     child: Child,
@@ -112,6 +109,7 @@ pub enum FzfAction {
     Down,
     ChangePrompt(Mode),
     ChangeBorderLabel(String),
+    ChangePreviewLabel(String),
     ChangePreview(VjjCommand),
     Preview(VjjCommand),
     ChangeHeader(String),
@@ -122,6 +120,7 @@ pub enum FzfAction {
     },
     ExecuteSilent(VjjCommand),
     Reload(VjjCommand),
+    ReloadSync(VjjCommand),
 }
 
 impl FzfAction {
@@ -129,14 +128,15 @@ impl FzfAction {
         match self {
             FzfAction::ClearQuery | FzfAction::Abort | FzfAction::Up | FzfAction::Down => None,
             FzfAction::ChangePrompt(value) => Some(value.to_string()),
-            FzfAction::ChangeHeader(value) | FzfAction::ChangeBorderLabel(value) => {
-                Some(value.to_owned())
-            }
+            FzfAction::ChangeHeader(value)
+            | FzfAction::ChangeBorderLabel(value)
+            | FzfAction::ChangePreviewLabel(value) => Some(value.to_owned()),
             FzfAction::ChangePreview(command)
             | FzfAction::Preview(command)
             | FzfAction::Become(command)
             | FzfAction::ExecuteSilent(command)
-            | FzfAction::Reload(command) => {
+            | FzfAction::Reload(command)
+            | FzfAction::ReloadSync(command) => {
                 Some(VjjShellExpression::Command(command.clone()).to_string())
             }
             FzfAction::Execute {

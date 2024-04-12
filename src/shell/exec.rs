@@ -1,9 +1,7 @@
-use std::{
-    ffi::OsStr,
-    fs::{self, File},
-    io::{self, Write},
-    process::{Child, ChildStdin, Command, Output, Stdio},
-};
+use std::ffi::OsStr;
+use std::fs::{self, File};
+use std::io::{self, Write};
+use std::process::{Child, ChildStdin, Command, Output, Stdio};
 
 use crate::common::VjjResult;
 
@@ -84,28 +82,6 @@ where
             status
         }
     };
-
-    // if interactive {
-    // } else {
-    //     command.stdout(Stdio::piped());
-    // };
-    // command.stderr(Stdio::piped());
-
-    // if pager {
-    //     let output = command.spawn()?.wait_with_output()?;
-    //     let Pager {
-    //         mut child,
-    //         mut stdin,
-    //     } = get_pager()?;
-    //     stdin.write(&output.stderr)?;
-    //     stdin.write(&output.stdout)?;
-    //     drop(stdin);
-    //     child.wait()?;
-    // } else {
-    //     let output = command.output()?;
-    //     io::stdout().write(&output.stdout)?;
-    //     io::stderr().write(&output.stderr)?;
-    // }
 
     Ok(())
 }

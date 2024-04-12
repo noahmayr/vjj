@@ -3,20 +3,18 @@ pub mod exec;
 pub mod fzf_binding;
 pub mod keymap;
 
-use std::{fmt::Display, str::FromStr};
+use std::fmt::Display;
+use std::str::FromStr;
 
 use itertools::Itertools;
 use ron::error::SpannedError;
 use serde::{Deserialize, Serialize};
 
-use crate::{common::Mode, fzf::FzfAction};
+use self::command::{vjj_command, VjjCommand};
+use self::fzf_binding::{fzf_handler, FzfBindHandler};
+use crate::common::Mode;
 
-use self::{
-    command::{vjj_command, VjjCommand},
-    fzf_binding::{fzf_handler, FzfBindHandler},
-};
-
-pub fn vjj_shell(expression: VjjShellExpression) -> Option<String> {
+pub fn vjj_shell(expression: VjjShellExpression) {
     let mode: Mode = Mode::from_str(std::env::var("FZF_PROMPT").unwrap_or_default().as_str())
         .unwrap_or_default();
 
@@ -32,7 +30,10 @@ pub fn vjj_shell(expression: VjjShellExpression) -> Option<String> {
     };
     match expression {
         VjjShellExpression::Handler(handler) => {
-            return fzf_handler(handler, ctx).and_then(actions_output)
+            let actions = fzf_handler(handler, ctx);
+            if !actions.is_empty() {
+                println!("{}", actions.iter().map(ToString::to_string).join("+"));
+            }
         }
         VjjShellExpression::Command(command) => match vjj_command(command, ctx, false, false) {
             Ok(_) => (),
@@ -50,15 +51,6 @@ pub fn vjj_shell(expression: VjjShellExpression) -> Option<String> {
             }
         },
     };
-    None
-}
-
-fn actions_output(actions: Vec<FzfAction>) -> Option<String> {
-    if actions.is_empty() {
-        None
-    } else {
-        Some(actions.iter().map(ToString::to_string).join("+"))
-    }
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]

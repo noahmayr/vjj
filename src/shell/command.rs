@@ -1,15 +1,15 @@
-use std::{fmt::Display, io::Write, str::FromStr};
+use std::fmt::Display;
+use std::io::Write;
+use std::str::FromStr;
 
-use crate::common::{Mode, Selection, VjjError, VjjResult};
 use itertools::Itertools;
 use ron::error::SpannedError;
 use serde::{Deserialize, Serialize};
 
-use super::{
-    exec::{get_pager, jj, Pager},
-    keymap::{get_keymap, Keybind},
-    ShellContext,
-};
+use super::exec::{get_pager, jj, Pager};
+use super::keymap::{get_keymap, Keybind};
+use super::ShellContext;
+use crate::common::{Mode, VjjError, VjjResult};
 
 pub fn vjj_command(
     command: VjjCommand,
@@ -18,13 +18,10 @@ pub fn vjj_command(
     interactive: bool,
 ) -> VjjResult<()> {
     match command {
-        VjjCommand::Show(selection) => {
-            if let Some(id) = selection.commit().focused {
-                jj(
-                    ["--ignore-working-copy", "show", id.as_str()],
-                    pager,
-                    interactive,
-                )?;
+        VjjCommand::Show(rev) => {
+            let rev = rev.trim_matches('\'');
+            if !rev.is_empty() {
+                jj(["--ignore-working-copy", "show", &rev], pager, interactive)?;
             }
         }
         VjjCommand::Log => {
@@ -126,7 +123,7 @@ pub fn vjj_command(
 pub enum VjjCommand {
     Log,
     Help,
-    Show(Selection),
+    Show(String),
     Jujutsu(Vec<String>),
     Output(String),
     Error(String),

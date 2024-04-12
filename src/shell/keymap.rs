@@ -1,24 +1,20 @@
-use std::{
-    collections::{BTreeMap, HashMap},
-    fmt::Display,
-    io,
-    process::Command,
-};
+use std::collections::{BTreeMap, HashMap};
+use std::fmt::Display;
+use std::io;
+use std::process::{Command, Stdio};
 
 use copypasta::{ClipboardContext, ClipboardProvider};
 use itertools::Itertools;
 use leon::{ParseError, RenderError, Template, Values};
+use once_cell::sync::Lazy;
 use ron::error::SpannedError;
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
-use crate::{
-    common::{Mode, Selection, VjjError, VjjResult},
-    fzf::FzfAction,
-    shell::{command::VjjCommand, ShellContext},
-};
-
-use once_cell::sync::Lazy;
+use crate::common::{Mode, Selection, VjjError, VjjResult};
+use crate::fzf::FzfAction;
+use crate::shell::command::VjjCommand;
+use crate::shell::ShellContext;
 
 // TODO: add user configurable keymap
 static KEYMAP: Lazy<Result<KeyMap, SpannedError>> =
@@ -85,7 +81,13 @@ pub fn handle_key_event(ctx: KeyHandlerContext) -> Option<Vec<FzfAction>> {
             .map(|action| -> VjjResult<Vec<FzfAction>> {
                 Ok(match action {
                     UserAction::Quit => vec![FzfAction::Abort],
-                    UserAction::ReloadLog => vec![FzfAction::Reload(VjjCommand::Log)],
+                    UserAction::ReloadLog => vec![
+                        FzfAction::Reload(VjjCommand::Log),
+                        FzfAction::ChangeHeader(
+                            which_key(&ctx.mode, &ctx.query)
+                                .unwrap_or(ctx.mode.header().to_string()),
+                        ),
+                    ],
                     UserAction::Mode(mode) => {
                         let mode = mode.render_and_eval(&ctx)?;
                         vec![
@@ -97,6 +99,30 @@ pub fn handle_key_event(ctx: KeyHandlerContext) -> Option<Vec<FzfAction>> {
                         ]
                     }
                     UserAction::Jujutsu(args) => {
+                        let mut command = Command::new("jj");
+                        let args = args.render(&ctx)?;
+                        command
+                            .arg("--color=always")
+                            .arg("--no-pager")
+                            .args(&args)
+                            .stdout(Stdio::piped())
+                            .stderr(Stdio::piped());
+                        let output = command.output()?;
+
+                        vec![
+                            FzfAction::Reload(VjjCommand::Log),
+                            FzfAction::ChangePreview(VjjCommand::Output(format!(
+                                "{}{}",
+                                String::from_utf8_lossy(&output.stdout),
+                                String::from_utf8_lossy(&output.stderr)
+                            ))),
+                            FzfAction::ChangePreviewLabel(format!(
+                                "Output (jj {})",
+                                args.join(" ")
+                            )),
+                        ]
+                    }
+                    UserAction::JujutsuPaged(args) => {
                         vec![
                             FzfAction::Execute {
                                 command: VjjCommand::Jujutsu(args.render(&ctx)?),
@@ -279,6 +305,8 @@ pub enum UserAction {
     Mode(UserMode),
     #[serde(rename = "jj")]
     Jujutsu(Vec<String>),
+    #[serde(rename = "jjp")]
+    JujutsuPaged(Vec<String>),
     #[serde(rename = "jji")]
     JujutsuInteractive(Vec<String>),
     Yank(UserCommand),

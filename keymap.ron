@@ -145,15 +145,15 @@
         ),
         " ": (
             "Show focused",
-            [jj(["--ignore-working-copy", "show", "{change:focused}"])],
+            [jjp(["--ignore-working-copy", "show", "{change:focused}"])],
         ),
         "@ ": (
             "Show wc",
-            [jj(["--ignore-working-copy", "show", "@"])],
+            [jjp(["--ignore-working-copy", "show", "@"])],
         ),
         "@- ": (
             "Show parent of wc",
-            [jj(["--ignore-working-copy", "show", "@"])],
+            [jjp(["--ignore-working-copy", "show", "@"])],
         ),
         "o": (
             "Show obslog of focused",

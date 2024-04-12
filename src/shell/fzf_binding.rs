@@ -1,34 +1,34 @@
-use std::{fmt::Display, str::FromStr};
+use std::fmt::Display;
+use std::str::FromStr;
 
 use ron::error::SpannedError;
 use serde::{Deserialize, Serialize};
 
-use crate::{
-    common::Selection,
-    fzf::FzfAction,
-    shell::{
-        keymap::{handle_key_event, Bindable, KeyHandlerContext},
-        ShellContext,
-    },
-};
-
+use super::command::VjjCommand;
 use super::keymap::Key;
+use crate::common::Selection;
+use crate::fzf::FzfAction;
+use crate::shell::keymap::{handle_key_event, Bindable, KeyHandlerContext};
+use crate::shell::ShellContext;
 
-pub fn fzf_handler(handler: FzfBindHandler, ctx: ShellContext) -> Option<Vec<FzfAction>> {
+pub fn fzf_handler(handler: FzfBindHandler, ctx: ShellContext) -> Vec<FzfAction> {
     match handler {
         FzfBindHandler::Focus {
             change,
             commit,
             action,
         } => match change.trim_matches('\'').is_empty() || commit.trim_matches('\'').is_empty() {
-            true => Some(vec![match action.as_str() {
+            true => vec![match action.as_str() {
                 "up" => FzfAction::Up,
                 _ => FzfAction::Down,
-            }]),
-            false => None,
+            }],
+            false => vec![
+                FzfAction::ChangePreview(VjjCommand::Show(commit)),
+                FzfAction::ChangePreviewLabel("Preview (jj show)".to_string()),
+            ],
         },
         FzfBindHandler::Input { kind, selection } => {
-            let mut actions = handle_key_event(KeyHandlerContext::new(
+            match handle_key_event(KeyHandlerContext::new(
                 match kind {
                     InputKind::Change => Bindable::new(ctx.query.clone()),
                     InputKind::Enter => Bindable::Key(Key::Enter),
@@ -36,9 +36,13 @@ pub fn fzf_handler(handler: FzfBindHandler, ctx: ShellContext) -> Option<Vec<Fzf
                 },
                 selection,
                 ctx.clone(),
-            ))?;
-            actions.push(FzfAction::ClearQuery);
-            Some(actions)
+            )) {
+                Some(mut actions) => {
+                    actions.push(FzfAction::ClearQuery);
+                    actions
+                }
+                None => vec![],
+            }
         }
     }
 }
