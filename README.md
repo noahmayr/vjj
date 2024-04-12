@@ -9,8 +9,8 @@ It's based on a [shell script prototype] which is in turn based on previous fzf 
 [shell script prototype]: https://gist.github.com/noahmayr/ed545a6bcd7c27d19dab1b629af0d144
 
 ## Requirements
-- jj[https://github.com/martinvonz/jj] 0.16.0 or higher
-- fzf[https://github.com/junegunn/fzf] 0.49.0 or higher
+- [jj](https://github.com/martinvonz/jj) 0.16.0 or higher
+- [fzf](https://github.com/junegunn/fzf) 0.49.0 or higher
 
 ## Getting Started
 ...
