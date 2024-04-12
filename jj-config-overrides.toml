@@ -1,4 +1,4 @@
 [templates]
 log = """
-surround("\u200B", "\u200B", separate("\u200B", change_id, commit_id)) ++ builtin_log_compact
+surround("\u200B", "\u200B", separate("\u200B", change_id.shortest(8), commit_id.shortest(8))) ++ builtin_log_compact
 """
