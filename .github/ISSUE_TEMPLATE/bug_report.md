@@ -29,4 +29,8 @@ Feel free to remove any of the sections below if they don't seem useful. -->
 ## Specifications
 
 - Platform:
+- Terminal:
+- Shell:
+- fzf version:
+- jj version:
 - Version:
