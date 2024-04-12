@@ -152,22 +152,35 @@ pub fn which_key(mode: &Mode, query: &str) -> Option<String> {
         return None;
     }
 
-    let max_len = options
-        .iter()
-        .map(|(key, _)| key.to_string().len())
-        .max()
-        .unwrap_or(0);
+    let mut left = options;
+    let right = left.split_off(left.len() / 2 + (left.len() % 2));
 
-    let mut left = options
-        .iter()
-        .map(|(key, Keybind(help, _))| {
-            format!("{:width$}  {help}", key.to_string(), width = max_len)
-        })
-        .collect_vec();
-    if left.len() % 2 == 1 {
-        left.push("".to_string());
-    }
-    let right = left.split_off(left.len() / 2);
+    let align = |options: Vec<(&Bindable, &Keybind)>| {
+        let max_len = options
+            .iter()
+            .map(|(key, _)| key.to_string().len())
+            .max()
+            .unwrap_or(0);
+
+        options
+            .iter()
+            .map(|(key, Keybind(help, actions))| {
+                let color = if actions.is_empty() {
+                    ansi_term::Color::Blue
+                } else {
+                    ansi_term::Color::Red
+                };
+                format!(
+                    "{}  {help}",
+                    color.paint(format!("{:width$}", key.to_string(), width = max_len)),
+                )
+            })
+            .collect_vec()
+    };
+
+    let left = align(left);
+    let right = align(right);
+
     let max_len = left.iter().map(|left| left.len()).max().unwrap_or(0);
 
     Some(
@@ -177,7 +190,9 @@ pub fn which_key(mode: &Mode, query: &str) -> Option<String> {
                 itertools::EitherOrBoth::Both(left, right) => {
                     format!("{left:width$} │ {right}", width = max_len)
                 }
-                itertools::EitherOrBoth::Left(left) => left.clone(),
+                itertools::EitherOrBoth::Left(left) => {
+                    format!("{left:width$} │", width = max_len)
+                }
                 itertools::EitherOrBoth::Right(right) => {
                     format!("{:width$} │ {right}", "", width = max_len)
                 }
