@@ -23,6 +23,7 @@ pub fn get_pager() -> io::Result<Pager> {
         .arg("-KR")
         // .arg("-F")
         .arg("--tabs=4")
+        .env("LESS", "")
         .stdin(Stdio::piped())
         .stdout(Stdio::from(tty))
         .spawn()?;
